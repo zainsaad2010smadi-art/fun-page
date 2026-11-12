@@ -1,0 +1,134 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Personal Experience</title>
+<style>
+body {
+  background: #111827;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+  padding: 35px 20px;
+}
+.card {
+  background: #1f2937;
+  padding: 25px;
+  border-radius: 18px;
+  max-width: 400px;
+  margin: auto;
+}
+p {
+  color: #d1d5db;
+  line-height: 1.8;
+}
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  width: 100%;
+  font-size: 17px;
+  margin-top: 15px;
+}
+video, img {
+  width: 100%;
+  border-radius: 12px;
+  margin-top: 15px;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h2>Welcome to Your Personal Experience!</h2>
+
+<p>
+We are excited to have you here.
+To continue, please allow camera access when prompted.
+You will be able to take a photo, review it,
+and choose whether to share it.
+Thank you for visiting and enjoy your experience!
+</p>
+
+<button onclick="startCamera()">Allow Camera</button>
+
+<video id="camera" autoplay playsinline hidden></video>
+
+<button onclick="takePhoto()">Take Photo</button>
+
+<img id="preview" hidden>
+
+<p id="notice"></p>
+
+<button onclick="sharePhoto()">Share Photo</button>
+</div>
+
+<canvas id="canvas" hidden></canvas>
+
+<script>
+let stream;
+let photo;
+
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: true
+    });
+    const video = document.getElementById("camera");
+    video.srcObject = stream;
+    video.hidden = false;
+  } catch (e) {
+    alert("Camera permission was not granted.");
+  }
+}
+
+function takePhoto() {
+  if (!stream) return;
+
+  const video = document.getElementById("camera");
+  const canvas = document.getElementById("canvas");
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0);
+
+  photo = canvas.toDataURL("image/png");
+
+  document.getElementById("preview").src = photo;
+  document.getElementById("preview").hidden = false;
+  document.getElementById("notice").textContent =
+    "Review your photo before sharing.";
+}
+
+async function sharePhoto() {
+  if (!photo) {
+    alert("Please take a photo first.");
+    return;
+  }
+
+  const response = await fetch(photo);
+  const blob = await response.blob();
+  const file = new File([blob], "photo.png", {
+    type: "image/png"
+  });
+
+  if (navigator.canShare &&
+      navigator.canShare({files:[file]})) {
+    await navigator.share({
+      files: [file],
+      title: "My Photo"
+    });
+  } else {
+    const link = document.createElement("a");
+    link.href = photo;
+    link.download = "photo.png";
+    link.click();
+  }
+}
+</script>
+</body>
+</html>
